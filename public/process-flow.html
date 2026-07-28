@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LearnHub — Application Process Flow</title>
+  <style>
+    :root {
+      --indigo: #4f46e5;
+      --indigo-light: #eef2ff;
+      --cyan: #06b6d4;
+      --cyan-light: #ecfeff;
+      --amber: #f59e0b;
+      --amber-light: #fffbeb;
+      --green: #16a34a;
+      --green-light: #f0fdf4;
+      --red: #dc2626;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --bg: #f8fafc;
+      --white: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+      padding: 2.5rem 1.5rem 4rem;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    header.page-head {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    header.page-head .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--indigo-light);
+      color: var(--indigo);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+
+    header.page-head h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    header.page-head p {
+      color: var(--muted);
+      margin-top: 0.5rem;
+      font-size: 1.05rem;
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.25rem;
+      margin: 1.75rem auto 0;
+      padding: 1rem 1.25rem;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      max-width: 900px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .swatch { width: 16px; height: 16px; border-radius: 5px; }
+
+    /* Section / lane */
+    .lane {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1.5rem;
+      margin-top: 2rem;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .lane-head {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .lane-head .dot {
+      width: 12px; height: 12px; border-radius: 50%;
+    }
+
+    .lane-head h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .lane-head span.tag {
+      margin-left: auto;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      background: var(--bg);
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+    }
+
+    /* Flow row */
+    .flow {
+      display: flex;
+      align-items: stretch;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .node {
+      flex: 1 1 0;
+      min-width: 150px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 0.85rem 0.9rem;
+      background: var(--white);
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      position: relative;
+    }
+
+    .node .n-title {
+      font-weight: 700;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .node .n-route {
+      font-family: 'SF Mono', ui-monospace, 'Cascadia Code', monospace;
+      font-size: 0.72rem;
+      color: var(--indigo);
+      background: var(--indigo-light);
+      padding: 0.1rem 0.4rem;
+      border-radius: 5px;
+      align-self: flex-start;
+    }
+
+    .node .n-desc {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    /* node color variants */
+    .node.start { border-color: var(--cyan); background: var(--cyan-light); }
+    .node.action { border-color: var(--indigo); }
+    .node.decision { border-color: var(--amber); background: var(--amber-light); }
+    .node.success { border-color: var(--green); background: var(--green-light); }
+    .node.data { border-color: var(--cyan); }
+
+    .node.decision .n-route,
+    .node.decision .n-title { }
+
+    /* Arrow between nodes */
+    .arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 1.25rem;
+      font-weight: 700;
+      padding: 0 0.1rem;
+      flex: 0 0 auto;
+    }
+
+    /* Sub-branch */
+    .branch {
+      margin-top: 0.75rem;
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .branch .branch-col {
+      flex: 1 1 240px;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 0.75rem;
+      background: var(--bg);
+    }
+
+    .branch .branch-col h4 {
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .branch .branch-col ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .branch .branch-col li {
+      font-size: 0.78rem;
+      color: var(--muted);
+      padding-left: 1rem;
+      position: relative;
+    }
+
+    .branch .branch-col li::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0.5rem;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--indigo);
+    }
+
+    .pill {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+    }
+    .pill.cyan { background: var(--cyan-light); color: var(--cyan); }
+    .pill.amber { background: var(--amber-light); color: var(--amber); }
+    .pill.green { background: var(--green-light); color: var(--green); }
+    .pill.indigo { background: var(--indigo-light); color: var(--indigo); }
+
+    /* Data model footer */
+    .stack {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .stack .chip {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem;
+      background: var(--white);
+    }
+    .stack .chip strong { font-size: 0.82rem; display: block; margin-bottom: 0.2rem; }
+    .stack .chip span { font-size: 0.74rem; color: var(--muted); }
+
+    footer.page-foot {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 3rem;
+    }
+
+    @media (max-width: 720px) {
+      .arrow { transform: rotate(90deg); width: 100%; padding: 0.15rem 0; }
+      .node { min-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="page-head">
+      <span class="badge">LearnHub · AI-Powered Learning Platform</span>
+      <h1>Application Process Flow</h1>
+      <p>End-to-end journeys for visitors, students, instructors, and administrators</p>
+
+      <div class="legend" role="list" aria-label="Diagram legend">
+        <div class="legend-item" role="listitem"><span class="swatch" style="background:var(--cyan)"></span> Entry point</div>
+        <div class="legend-item" role="listitem"><span class="swatch" style="background:var(--indigo)"></span> User action / page</div>
+        <div class="legend-item" role="listitem"><span class="swatch" style="background:var(--amber)"></span> Decision</div>
+        <div class="legend-item" role="listitem"><span class="swatch" style="background:var(--green)"></span> Success / completion</div>
+      </div>
+    </header>
+
+    <!-- VISITOR -->
+    <section class="lane">
+      <div class="lane-head">
+        <span class="dot" style="background:var(--cyan)"></span>
+        <h2>1 · Visitor &amp; Discovery</h2>
+        <span class="tag">Public — no auth required</span>
+      </div>
+      <div class="flow">
+        <div class="node start">
+          <div class="n-title">Landing page</div>
+          <span class="n-route">/</span>
+          <div class="n-desc">Hero, featured courses, stats &amp; CTAs.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node action">
+          <div class="n-title">Browse courses</div>
+          <span class="n-route">/courses</span>
+          <div class="n-desc">Search + filter by category &amp; level.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node action">
+          <div class="n-title">Categories</div>
+          <span class="n-route">/categories</span>
+          <div class="n-desc">Explore by topic area.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node action">
+          <div class="n-title">Course detail</div>
+          <span class="n-route">/courses/[slug]</span>
+          <div class="n-desc">Curriculum, reviews, instructor, price.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node decision">
+          <div class="n-title">Enroll?</div>
+          <div class="n-desc">Requires an account → redirect to auth.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AUTH -->
+    <section class="lane">
+      <div class="lane-head">
+        <span class="dot" style="background:var(--indigo)"></span>
+        <h2>2 · Authentication</h2>
+        <span class="tag">Supabase Auth</span>
+      </div>
+      <div class="flow">
+        <div class="node action">
+          <div class="n-title">Sign up</div>
+          <span class="n-route">/auth/sign-up</span>
+          <div class="n-desc">Email, password &amp; role (student / instructor).</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node data">
+          <div class="n-title">Trigger fires</div>
+          <div class="n-desc"><code>handle_new_user</code> auto-creates a <strong>profiles</strong> row.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node action">
+          <div class="n-title">Confirm &amp; log in</div>
+          <span class="n-route">/auth/login</span>
+          <div class="n-desc">Callback exchanges code for a session.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node decision">
+          <div class="n-title">Route by role</div>
+          <div class="n-desc">Middleware guards protected routes.</div>
+        </div>
+      </div>
+      <div class="branch">
+        <div class="branch-col">
+          <h4><span class="pill indigo">Student</span> → /dashboard</h4>
+          <ul><li>Learning overview &amp; recommendations</li></ul>
+        </div>
+        <div class="branch-col">
+          <h4><span class="pill cyan">Instructor</span> → /instructor/dashboard</h4>
+          <ul><li>Course management &amp; earnings</li></ul>
+        </div>
+        <div class="branch-col">
+          <h4><span class="pill amber">Admin</span> → /admin</h4>
+          <ul><li>Platform stats &amp; data reset</li></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- STUDENT -->
+    <section class="lane">
+      <div class="lane-head">
+        <span class="dot" style="background:var(--indigo)"></span>
+        <h2>3 · Student Journey</h2>
+        <span class="tag">Enroll → Learn → Complete</span>
+      </div>
+      <div class="flow">
+        <div class="node decision">
+          <div class="n-title">Free or paid?</div>
+          <div class="n-desc">Determines the enrollment path.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node action">
+          <div class="n-title">Checkout</div>
+          <span class="n-route">/checkout/[courseId]</span>
+          <div class="n-desc">Stripe session for paid courses; instant for free.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node data">
+          <div class="n-title">Enrollment created</div>
+          <div class="n-desc">Payment recorded + <strong>enrollments</strong> row added.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node action">
+          <div class="n-title">Learn</div>
+          <span class="n-route">/learn/[slug]</span>
+          <div class="n-desc">Video player, lesson sidebar, AI tutor.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node success">
+          <div class="n-title">Progress &amp; completion</div>
+          <div class="n-desc">Per-lesson <strong>progress</strong> → % complete → review.</div>
+        </div>
+      </div>
+      <div class="branch">
+        <div class="branch-col">
+          <h4><span class="pill indigo">Dashboard</span></h4>
+          <ul>
+            <li>Enrolled, in-progress &amp; completed counts</li>
+            <li>Continue-learning shortcuts</li>
+            <li>AI course recommendations</li>
+          </ul>
+        </div>
+        <div class="branch-col">
+          <h4><span class="pill indigo">Profile</span></h4>
+          <ul>
+            <li>View stats · <code>/profile</code></li>
+            <li>Edit name &amp; bio · <code>/profile/edit</code></li>
+          </ul>
+        </div>
+        <div class="branch-col">
+          <h4><span class="pill cyan">AI tutor</span></h4>
+          <ul>
+            <li>Context-aware chat during lessons</li>
+            <li>Streams via <code>/api/chat</code> (AI SDK)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- INSTRUCTOR -->
+    <section class="lane">
+      <div class="lane-head">
+        <span class="dot" style="background:var(--cyan)"></span>
+        <h2>4 · Instructor Journey</h2>
+        <span class="tag">Create &amp; publish</span>
+      </div>
+      <div class="flow">
+        <div class="node start">
+          <div class="n-title">Instructor dashboard</div>
+          <span class="n-route">/instructor/dashboard</span>
+          <div class="n-desc">Courses, students, ratings &amp; revenue.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node action">
+          <div class="n-title">New course</div>
+          <span class="n-route">/instructor/courses/new</span>
+          <div class="n-desc">Title, description, level, price.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node action">
+          <div class="n-title">Edit &amp; add lessons</div>
+          <span class="n-route">/instructor/courses/[id]/edit</span>
+          <div class="n-desc">Manage curriculum &amp; resources.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node decision">
+          <div class="n-title">Publish?</div>
+          <div class="n-desc">Toggle visibility to learners.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node success">
+          <div class="n-title">Live on catalog</div>
+          <div class="n-desc">Appears in /courses &amp; recommendations.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN -->
+    <section class="lane">
+      <div class="lane-head">
+        <span class="dot" style="background:var(--amber)"></span>
+        <h2>5 · Admin &amp; Operations</h2>
+        <span class="tag">Service-role · seed &amp; reset</span>
+      </div>
+      <div class="flow">
+        <div class="node start">
+          <div class="n-title">Setup / bootstrap</div>
+          <span class="n-route">/setup</span>
+          <div class="n-desc">One-click seed via Supabase Admin API.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node data">
+          <div class="n-title">Sample data created</div>
+          <div class="n-desc">Demo users, courses, lessons, enrollments, reviews.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node action">
+          <div class="n-title">Admin panel</div>
+          <span class="n-route">/admin</span>
+          <div class="n-desc">Platform-wide stats &amp; recent activity.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node decision">
+          <div class="n-title">Reset data?</div>
+          <div class="n-desc">Removes seeded demo content only.</div>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node success">
+          <div class="n-title">Fresh &amp; deploy-ready</div>
+          <div class="n-desc">Real accounts preserved; publish to Vercel.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DATA + STACK -->
+    <section class="lane">
+      <div class="lane-head">
+        <span class="dot" style="background:var(--indigo)"></span>
+        <h2>Data Model &amp; Stack</h2>
+        <span class="tag">Postgres + RLS</span>
+      </div>
+      <div class="stack">
+        <div class="chip"><strong>profiles</strong><span>id, email, full_name, bio, role</span></div>
+        <div class="chip"><strong>categories</strong><span>name, slug, description, icon</span></div>
+        <div class="chip"><strong>courses</strong><span>title, slug, price, level, instructor</span></div>
+        <div class="chip"><strong>lessons</strong><span>course_id, title, video, order</span></div>
+        <div class="chip"><strong>enrollments</strong><span>user_id, course_id (unique)</span></div>
+        <div class="chip"><strong>progress</strong><span>user_id, lesson_id (unique)</span></div>
+        <div class="chip"><strong>reviews</strong><span>user_id, course_id, rating</span></div>
+        <div class="chip"><strong>payments</strong><span>user_id, course_id, amount, status</span></div>
+      </div>
+      <div class="branch" style="margin-top:1rem;">
+        <div class="branch-col">
+          <h4><span class="pill green">Frontend</span></h4>
+          <ul><li>Next.js App Router · React Server Components</li><li>Tailwind CSS · shadcn/ui</li></ul>
+        </div>
+        <div class="branch-col">
+          <h4><span class="pill cyan">Backend</span></h4>
+          <ul><li>Supabase (Postgres, Auth, RLS)</li><li>Server Actions &amp; Route Handlers</li></ul>
+        </div>
+        <div class="branch-col">
+          <h4><span class="pill amber">Integrations</span></h4>
+          <ul><li>Stripe Checkout (payments)</li><li>AI SDK (chat &amp; recommendations)</li></ul>
+        </div>
+      </div>
+    </section>
+
+    <footer class="page-foot">
+      LearnHub process flow · generated for architecture &amp; onboarding reference
+    </footer>
+  </div>
+</body>
+</html>

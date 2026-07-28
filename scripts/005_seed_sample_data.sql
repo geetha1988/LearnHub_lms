@@ -1,0 +1,25 @@
+-- =====================================================================
+-- NOTICE: This SQL seed is DEPRECATED and intentionally does nothing.
+-- =====================================================================
+--
+-- Auth users cannot be reliably created with a raw INSERT into auth.users
+-- (Supabase's auth system needs internal fields/identities set exactly
+-- right, and such accounts often cannot log in).
+--
+-- Instead, seed the platform through the built-in setup page, which creates
+-- the demo accounts through the Supabase Admin API so they can actually log
+-- in, and then inserts all sample content:
+--
+--     1. Make sure scripts 001-004 have been run.
+--     2. Visit  /setup  in the app and click "Create sample data".
+--
+-- Demo credentials (created by /setup):
+--   admin@learnhub.test            / Admin123!
+--   sarah.instructor@learnhub.test / Instructor123!
+--   james.instructor@learnhub.test / Instructor123!
+--   alex.student@learnhub.test     / Student123!
+--   maria.student@learnhub.test    / Student123!
+--   john.student@learnhub.test     / Student123!
+--
+-- No-op so running this script has no effect:
+select 'Use /setup to seed sample data (Admin API).' as notice;
