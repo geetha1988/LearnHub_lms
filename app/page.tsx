@@ -8,37 +8,45 @@ import { BookOpen, Users, Award, TrendingUp, Sparkles, Brain } from "lucide-reac
 import Link from "next/link"
 
 export default async function HomePage() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
   let headerUser = null
-  if (user) {
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
-    headerUser = { id: user.id, email: user.email ?? "", role: profile?.role ?? "student" }
+  let coursesWithCount:
+    | (Record<string, any> & { _count: { enrollments: number } })[]
+    | undefined
+
+  try {
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (user) {
+      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
+      headerUser = { id: user.id, email: user.email ?? "", role: profile?.role ?? "student" }
+    }
+
+    // Fetch featured courses
+    const { data: courses } = await supabase
+      .from("courses")
+      .select(
+        `
+        *,
+        instructor:profiles!courses_instructor_id_fkey(full_name),
+        enrollments:enrollments(count)
+      `,
+      )
+      .eq("is_published", true)
+      .limit(6)
+
+    coursesWithCount = courses?.map((course) => ({
+      ...course,
+      _count: {
+        enrollments: course.enrollments?.length || 0,
+      },
+    }))
+  } catch (error) {
+    console.log("[v0] HomePage Supabase fetch failed:", error instanceof Error ? error.message : error)
   }
-
-  // Fetch featured courses
-  const { data: courses } = await supabase
-    .from("courses")
-    .select(
-      `
-      *,
-      instructor:profiles!courses_instructor_id_fkey(full_name),
-      enrollments:enrollments(count)
-    `,
-    )
-    .eq("is_published", true)
-    .limit(6)
-
-  const coursesWithCount = courses?.map((course) => ({
-    ...course,
-    _count: {
-      enrollments: course.enrollments?.length || 0,
-    },
-  }))
 
   return (
     <div className="flex min-h-screen flex-col">
