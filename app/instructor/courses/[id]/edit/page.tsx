@@ -13,9 +13,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Plus, Trash2 } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { use } from "react"
+import { LessonManager } from "@/components/lesson-manager"
 
 export default function EditCoursePage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
   // `params` may arrive as a Promise (Next.js 16) or an already-resolved object
@@ -39,7 +40,11 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
 
       if (courseError) throw courseError
 
-      const { data: lessonsData } = await supabase.from("lessons").select("*").eq("course_id", id).order("order_index")
+      const { data: lessonsData } = await supabase
+        .from("lessons")
+        .select("*, materials:lesson_materials(*)")
+        .eq("course_id", id)
+        .order("order_index")
 
       setCourse(courseData)
       setLessons(lessonsData || [])
@@ -64,38 +69,6 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
       setError(error.message)
     } finally {
       setIsSaving(false)
-    }
-  }
-
-  const handleAddLesson = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("lessons")
-        .insert({
-          course_id: id,
-          title: "New Lesson",
-          order_index: lessons.length,
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      setLessons([...lessons, data])
-    } catch (error: any) {
-      setError(error.message)
-    }
-  }
-
-  const handleDeleteLesson = async (lessonId: string) => {
-    try {
-      const { error } = await supabase.from("lessons").delete().eq("id", lessonId)
-
-      if (error) throw error
-
-      setLessons(lessons.filter((l) => l.id !== lessonId))
-    } catch (error: any) {
-      setError(error.message)
     }
   }
 
@@ -203,38 +176,7 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
             </TabsContent>
 
             <TabsContent value="lessons" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Course Lessons</CardTitle>
-                    <Button onClick={handleAddLesson} size="sm">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Lesson
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {lessons.length > 0 ? (
-                    <div className="space-y-2">
-                      {lessons.map((lesson, index) => (
-                        <div key={lesson.id} className="flex items-center justify-between rounded-lg border p-4">
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm font-medium text-gray-500">#{index + 1}</span>
-                            <span className="font-medium">{lesson.title}</span>
-                          </div>
-                          <Button variant="ghost" size="sm" onClick={() => handleDeleteLesson(lesson.id)}>
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="py-12 text-center text-gray-600">
-                      <p>No lessons yet. Click "Add Lesson" to get started.</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <LessonManager courseId={id} initialLessons={lessons} />
             </TabsContent>
 
             <TabsContent value="settings" className="mt-6">

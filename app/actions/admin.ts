@@ -37,6 +37,87 @@ const DEMO_CATEGORIES = [
 
 const C = (n: number) => `c0000000-0000-4000-8000-00000000000${n}`
 const L = (course: number, lesson: number) => `d${course}000000-0000-4000-8000-00000000000${lesson}`
+// Deterministic material id: course (1-6), lesson (1-4), material index (1-9)
+const M = (course: number, lesson: number, mat: number) =>
+  `e${course}${lesson}00000-0000-4000-8000-00000000000${mat}`
+
+// Public, hotlink-friendly sample media used for the demo materials.
+const SAMPLE = {
+  video: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+  video2: "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+  audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+  pdf: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+}
+
+type DemoMaterial = {
+  type: "video" | "audio" | "pdf" | "slides" | "article" | "download"
+  title: string
+  url?: string
+  content?: string
+  file_name?: string
+  duration?: number
+}
+
+/**
+ * Builds a representative spread of materials for a lesson so every content
+ * type is demonstrated across the seeded catalog. Every lesson gets a video and
+ * a written article; lessons rotate through pdf, slides, audio, and downloads.
+ */
+function buildMaterials(lesson: { title: string; description: string; duration: number }, li: number): DemoMaterial[] {
+  const materials: DemoMaterial[] = [
+    {
+      type: "video",
+      title: `${lesson.title} — Video Lecture`,
+      url: li % 2 === 0 ? SAMPLE.video2 : SAMPLE.video,
+      duration: lesson.duration,
+    },
+    {
+      type: "article",
+      title: `${lesson.title} — Reading`,
+      content:
+        `${lesson.description}\n\n` +
+        `In this written lesson we go deeper into the concepts covered in the video. ` +
+        `Read through the notes below, follow along with the examples, and try each ` +
+        `step yourself before moving on.\n\n` +
+        `Key takeaways:\n` +
+        `• Understand the core idea and why it matters.\n` +
+        `• Work through the example step by step.\n` +
+        `• Complete the practice exercise at the end.\n\n` +
+        `When you're comfortable with this material, mark the lesson complete and continue ` +
+        `to the next one.`,
+    },
+  ]
+
+  // Rotate a richer material type into each lesson by position.
+  switch (li % 4) {
+    case 0:
+      materials.push({ type: "pdf", title: `${lesson.title} — Slides (PDF)`, url: SAMPLE.pdf })
+      break
+    case 1:
+      materials.push({ type: "slides", title: `${lesson.title} — Presentation`, url: SAMPLE.pdf })
+      break
+    case 2:
+      materials.push({
+        type: "audio",
+        title: `${lesson.title} — Audio Recap`,
+        url: SAMPLE.audio,
+        duration: 4,
+      })
+      break
+    default:
+      break
+  }
+
+  // Every lesson ships with a downloadable resource.
+  materials.push({
+    type: "download",
+    title: `${lesson.title} — Exercise Files`,
+    url: SAMPLE.pdf,
+    file_name: `${lesson.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-worksheet.pdf`,
+  })
+
+  return materials
+}
 
 type DemoCourse = {
   id: string
@@ -274,6 +355,25 @@ export async function seedSampleData(): Promise<{ success: boolean; message: str
     )
     const { error: lessonErr } = await admin.from("lessons").upsert(lessonRows, { onConflict: "id" })
     if (lessonErr) return { success: false, message: `Failed to seed lessons: ${lessonErr.message}` }
+
+    // 5b. Lesson materials (upsert by id) — the actual learning content.
+    const materialRows = DEMO_COURSES.flatMap((c, ci) =>
+      c.lessons.flatMap((l, li) =>
+        buildMaterials(l, li).map((m, mi) => ({
+          id: M(ci + 1, li + 1, mi + 1),
+          lesson_id: L(ci + 1, li + 1),
+          type: m.type,
+          title: m.title,
+          url: m.url ?? null,
+          content: m.content ?? null,
+          file_name: m.file_name ?? null,
+          duration_minutes: m.duration ?? null,
+          order_index: mi,
+        })),
+      ),
+    )
+    const { error: materialErr } = await admin.from("lesson_materials").upsert(materialRows, { onConflict: "id" })
+    if (materialErr) return { success: false, message: `Failed to seed lesson materials: ${materialErr.message}` }
 
     // Convenience ids.
     const alex = idByEmail.get("alex.student@learnhub.test")!

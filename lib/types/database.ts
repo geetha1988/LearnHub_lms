@@ -34,6 +34,22 @@ export interface Course {
   updated_at: string
 }
 
+export type MaterialType = "video" | "audio" | "pdf" | "slides" | "article" | "download"
+
+export interface LessonMaterial {
+  id: string
+  lesson_id: string
+  type: MaterialType
+  title: string
+  url: string | null
+  content: string | null
+  file_name: string | null
+  duration_minutes: number | null
+  order_index: number
+  created_at: string
+  updated_at: string
+}
+
 export interface Lesson {
   id: string
   course_id: string
@@ -44,6 +60,7 @@ export interface Lesson {
   order_index: number
   is_free: boolean
   resources: any[]
+  materials?: LessonMaterial[]
   created_at: string
   updated_at: string
 }

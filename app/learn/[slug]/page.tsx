@@ -26,7 +26,7 @@ export default async function LearnCoursePage({ params }: { params: Promise<{ sl
       `
       *,
       instructor:profiles!courses_instructor_id_fkey(full_name),
-      lessons:lessons(*)
+      lessons:lessons(*, materials:lesson_materials(*))
     `,
     )
     .eq("slug", slug)
@@ -55,7 +55,13 @@ export default async function LearnCoursePage({ params }: { params: Promise<{ sl
     .eq("user_id", user.id)
     .eq("course_id", course.id)
 
-  const sortedLessons = course.lessons?.sort((a: any, b: any) => a.order_index - b.order_index) || []
+  const sortedLessons =
+    course.lessons
+      ?.sort((a: any, b: any) => a.order_index - b.order_index)
+      .map((lesson: any) => ({
+        ...lesson,
+        materials: (lesson.materials || []).sort((a: any, b: any) => a.order_index - b.order_index),
+      })) || []
 
   // Find first incomplete lesson or first lesson
   const firstIncompleteLesson =
