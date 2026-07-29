@@ -17,8 +17,10 @@ import { ArrowLeft, Plus, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { use } from "react"
 
-export default function EditCoursePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function EditCoursePage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
+  // `params` may arrive as a Promise (Next.js 16) or an already-resolved object
+  // depending on the runtime, so unwrap it defensively.
+  const { id } = params instanceof Promise ? use(params) : params
   const [course, setCourse] = useState<any>(null)
   const [lessons, setLessons] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
