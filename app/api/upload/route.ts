@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/server"
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const body = (await request.json()) as HandleUploadBody
 
+  console.log("[v0] /api/upload called, BLOB token present:", Boolean(process.env.BLOB_READ_WRITE_TOKEN))
+
   try {
     const jsonResponse = await handleUpload({
       body,
@@ -18,26 +20,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           data: { user },
         } = await supabase.auth.getUser()
 
+        console.log("[v0] /api/upload auth user:", user?.id ?? "none")
+
         if (!user) {
           throw new Error("You must be signed in to upload files.")
         }
 
         const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
 
+        console.log("[v0] /api/upload role:", profile?.role ?? "none")
+
         if (profile?.role !== "instructor" && profile?.role !== "admin") {
           throw new Error("Only instructors can upload course materials.")
         }
 
         return {
-          allowedContentTypes: [
-            "video/*",
-            "audio/*",
-            "application/pdf",
-            "application/vnd.ms-powerpoint",
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            "image/*",
-            "application/zip",
-          ],
           addRandomSuffix: true,
           maximumSizeInBytes: 1024 * 1024 * 1024, // 1 GB
         }
@@ -49,6 +46,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json(jsonResponse)
   } catch (error) {
+    console.log("[v0] /api/upload error:", (error as Error).message)
     return NextResponse.json({ error: (error as Error).message }, { status: 400 })
   }
 }
