@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
+import { upload } from "@vercel/blob/client"
 import { createClient } from "@/lib/supabase/client"
 import type { Lesson, LessonMaterial, MaterialType } from "@/lib/types/database"
 import { Card, CardContent } from "@/components/ui/card"
@@ -24,6 +25,7 @@ import {
   Download,
   Save,
   Loader2,
+  Upload,
 } from "lucide-react"
 
 const MATERIAL_META: Record<MaterialType, { label: string; icon: typeof Video }> = {
@@ -51,7 +53,28 @@ export function LessonManager({ courseId, initialLessons }: LessonManagerProps) 
   )
   const [openLessonId, setOpenLessonId] = useState<string | null>(initialLessons[0]?.id ?? null)
   const [savingLessonId, setSavingLessonId] = useState<string | null>(null)
+  const [uploadingId, setUploadingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({})
+
+  async function handleUploadFile(lessonId: string, material: LessonMaterial, file: File) {
+    setError(null)
+    setUploadingId(material.id)
+    try {
+      const blob = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/upload",
+      })
+      updateMaterialState(lessonId, material.id, {
+        url: blob.url,
+        file_name: material.file_name || file.name,
+      })
+    } catch (e: any) {
+      setError(e?.message || "Upload failed. Please try again.")
+    } finally {
+      setUploadingId(null)
+    }
+  }
 
   function updateLessonState(lessonId: string, patch: Partial<LessonWithMaterials>) {
     setLessons((prev) => prev.map((l) => (l.id === lessonId ? { ...l, ...patch } : l)))
@@ -394,16 +417,59 @@ export function LessonManager({ courseId, initialLessons }: LessonManagerProps) 
                             </div>
                           ) : (
                             <div className="space-y-2 md:col-span-2">
-                              <Label>
-                                {material.type === "download" ? "File URL" : "Media URL"}
-                              </Label>
-                              <Input
-                                placeholder="https://..."
-                                value={material.url || ""}
-                                onChange={(e) =>
-                                  updateMaterialState(lesson.id, material.id, { url: e.target.value })
-                                }
-                              />
+                              <Label>{material.type === "download" ? "File URL" : "Media URL"}</Label>
+                              <div className="flex gap-2">
+                                <Input
+                                  placeholder="Paste a URL or upload a file"
+                                  value={material.url || ""}
+                                  onChange={(e) =>
+                                    updateMaterialState(lesson.id, material.id, { url: e.target.value })
+                                  }
+                                />
+                                <input
+                                  ref={(el) => {
+                                    fileInputs.current[material.id] = el
+                                  }}
+                                  type="file"
+                                  className="hidden"
+                                  accept={
+                                    material.type === "video"
+                                      ? "video/*"
+                                      : material.type === "audio"
+                                        ? "audio/*"
+                                        : material.type === "pdf" || material.type === "slides"
+                                          ? "application/pdf,.ppt,.pptx"
+                                          : undefined
+                                  }
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0]
+                                    if (file) handleUploadFile(lesson.id, material, file)
+                                    e.target.value = ""
+                                  }}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="shrink-0 bg-transparent"
+                                  disabled={uploadingId === material.id}
+                                  onClick={() => fileInputs.current[material.id]?.click()}
+                                >
+                                  {uploadingId === material.id ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Uploading
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Upload className="mr-2 h-4 w-4" />
+                                      Upload
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
+                              {material.url && (
+                                <p className="truncate text-xs text-muted-foreground">{material.url}</p>
+                              )}
                             </div>
                           )}
 
