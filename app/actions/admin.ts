@@ -42,11 +42,11 @@ const M = (course: number, lesson: number, mat: number) =>
   `e${course}${lesson}00000-0000-4000-8000-00000000000${mat}`
 
 // Public, hotlink-friendly sample media used for the demo materials.
-// Served from commondatastorage.googleapis.com, which allows anonymous access
-// (the storage.googleapis.com host now returns AccessDenied for these files).
+// media.w3.org has served these clips openly for years (the Google
+// gtv-videos-bucket now returns AccessDenied on every host).
 const SAMPLE = {
-  video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-  video2: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+  video: "https://media.w3.org/2010/05/sintel/trailer.mp4",
+  video2: "https://media.w3.org/2010/05/bunny/movie.mp4",
   audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
   pdf: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
 }
