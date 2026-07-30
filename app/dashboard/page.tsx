@@ -26,8 +26,11 @@ export default async function DashboardPage() {
   // Fetch user profile
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
 
-  // Redirect instructors and admins to their dashboards
-  if (profile?.role === "instructor" || profile?.role === "admin") {
+  // Redirect each role to its own dashboard
+  if (profile?.role === "admin") {
+    redirect("/admin")
+  }
+  if (profile?.role === "instructor") {
     redirect("/instructor/dashboard")
   }
 
