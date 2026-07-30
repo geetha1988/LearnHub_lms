@@ -31,9 +31,20 @@ export async function updateSession(request: NextRequest) {
     },
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // getUser() throws (not just returns null) when the cookie holds a JWT for a
+  // session that no longer exists (e.g. after a data reset). Treat any failure
+  // as "no user" and clear the stale auth cookies so it stops recurring.
+  let user = null
+  try {
+    const result = await supabase.auth.getUser()
+    user = result.data.user
+  } catch {
+    for (const cookie of request.cookies.getAll()) {
+      if (cookie.name.startsWith("sb-")) {
+        supabaseResponse.cookies.set(cookie.name, "", { maxAge: 0, path: "/" })
+      }
+    }
+  }
 
   const pathname = request.nextUrl.pathname
 
