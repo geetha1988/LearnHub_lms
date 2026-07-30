@@ -11,6 +11,8 @@ import { notFound } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 
+export const dynamic = "force-dynamic"
+
 export default async function CourseDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const supabase = await createClient()

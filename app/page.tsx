@@ -7,6 +7,8 @@ import { CourseCard } from "@/components/course-card"
 import { BookOpen, Users, Award, TrendingUp, Sparkles, Brain } from "lucide-react"
 import Link from "next/link"
 
+export const dynamic = "force-dynamic"
+
 export default async function HomePage() {
   let headerUser = null
   let coursesWithCount:

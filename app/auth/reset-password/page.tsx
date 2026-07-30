@@ -7,44 +7,47 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
-export default function SignUpPage() {
-  const [email, setEmail] = useState("")
+export default function ResetPasswordPage() {
   const [password, setPassword] = useState("")
+  const [confirm, setConfirm] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [fullName, setFullName] = useState("")
-  const [role, setRole] = useState("student")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
-    setIsLoading(true)
     setError(null)
 
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.")
+      return
+    }
+    if (password !== confirm) {
+      setError("Passwords do not match.")
+      return
+    }
+
+    const supabase = createClient()
+    setIsLoading(true)
+
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
-          data: {
-            full_name: fullName,
-            role: role,
-          },
-        },
-      })
+      const { error } = await supabase.auth.updateUser({ password })
       if (error) throw error
-      router.push("/auth/sign-up-success")
+      router.push("/dashboard")
+      router.refresh()
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      const message = error instanceof Error ? error.message : "An error occurred"
+      if (/auth session missing|session/i.test(message)) {
+        setError("Your reset link has expired or is invalid. Please request a new one from the Forgot password page.")
+      } else {
+        setError(message)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -55,40 +58,18 @@ export default function SignUpPage() {
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold text-indigo-600">LearnHub</h1>
-          <p className="mt-2 text-muted-foreground">Start your learning journey</p>
+          <p className="mt-2 text-muted-foreground">Choose a new password</p>
         </div>
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Sign up</CardTitle>
-            <CardDescription>Create a new account</CardDescription>
+            <CardTitle className="text-2xl">Reset password</CardTitle>
+            <CardDescription>Enter and confirm your new password below</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSignUp}>
+            <form onSubmit={handleUpdate}>
               <div className="flex flex-col gap-6">
                 <div className="grid gap-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="John Doe"
-                    required
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="m@example.com"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">New password</Label>
                   <div className="relative">
                     <Input
                       id="password"
@@ -109,26 +90,23 @@ export default function SignUpPage() {
                   </div>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="role">I want to</Label>
-                  <Select value={role} onValueChange={setRole}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="student">Learn (Student)</SelectItem>
-                      <SelectItem value="instructor">Teach (Instructor)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="confirm">Confirm password</Label>
+                  <Input
+                    id="confirm"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                  />
                 </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Creating account..." : "Sign up"}
+                  {isLoading ? "Updating..." : "Update password"}
                 </Button>
               </div>
               <div className="mt-4 text-center text-sm">
-                Already have an account?{" "}
                 <Link href="/auth/login" className="text-indigo-600 underline underline-offset-4 hover:text-indigo-700">
-                  Login
+                  Back to login
                 </Link>
               </div>
             </form>
