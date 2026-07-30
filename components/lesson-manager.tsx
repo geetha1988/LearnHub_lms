@@ -54,23 +54,29 @@ export function LessonManager({ courseId, initialLessons }: LessonManagerProps) 
   const [openLessonId, setOpenLessonId] = useState<string | null>(initialLessons[0]?.id ?? null)
   const [savingLessonId, setSavingLessonId] = useState<string | null>(null)
   const [uploadingId, setUploadingId] = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({})
 
   async function handleUploadFile(lessonId: string, material: LessonMaterial, file: File) {
     setError(null)
+    setUploadError(null)
     setUploadingId(material.id)
+    console.log("[v0] upload starting:", { name: file.name, size: file.size, type: file.type })
     try {
       const blob = await upload(file.name, file, {
         access: "public",
         handleUploadUrl: "/api/upload",
+        contentType: file.type || undefined,
       })
+      console.log("[v0] upload succeeded, url:", blob.url)
       updateMaterialState(lessonId, material.id, {
         url: blob.url,
         file_name: material.file_name || file.name,
       })
     } catch (e: any) {
-      setError(e?.message || "Upload failed. Please try again.")
+      console.log("[v0] upload failed:", e?.message, e)
+      setUploadError(e?.message || "Upload failed. Please try again.")
     } finally {
       setUploadingId(null)
     }
@@ -467,6 +473,14 @@ export function LessonManager({ courseId, initialLessons }: LessonManagerProps) 
                                   )}
                                 </Button>
                               </div>
+                              {uploadingId === material.id && (
+                                <p className="text-xs text-muted-foreground">
+                                  Uploading file, please wait...
+                                </p>
+                              )}
+                              {uploadError && uploadingId !== material.id && (
+                                <p className="text-xs text-red-500">{uploadError}</p>
+                              )}
                               {material.url && (
                                 <p className="truncate text-xs text-muted-foreground">{material.url}</p>
                               )}
