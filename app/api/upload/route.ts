@@ -1,52 +1,44 @@
-import { handleUpload, type HandleUploadBody } from "@vercel/blob/client"
+import { put } from "@vercel/blob"
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
-// Client-side upload flow: the browser uploads directly to Blob, bypassing the
-// serverless request body size limit (important for large video files).
+// Server-side upload: the browser POSTs the file here and we upload it to Blob
+// with put(). This avoids the client-token handshake, which does not complete
+// in the sandboxed preview environment.
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const body = (await request.json()) as HandleUploadBody
-
-  console.log("[v0] /api/upload called, BLOB token present:", Boolean(process.env.BLOB_READ_WRITE_TOKEN))
-
   try {
-    const jsonResponse = await handleUpload({
-      body,
-      request,
-      onBeforeGenerateToken: async () => {
-        // Only authenticated instructors/admins may upload course media.
-        const supabase = await createClient()
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
+    // Only authenticated instructors/admins may upload course media.
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-        console.log("[v0] /api/upload auth user:", user?.id ?? "none")
+    if (!user) {
+      return NextResponse.json({ error: "You must be signed in to upload files." }, { status: 401 })
+    }
 
-        if (!user) {
-          throw new Error("You must be signed in to upload files.")
-        }
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
 
-        const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
+    if (profile?.role !== "instructor" && profile?.role !== "admin") {
+      return NextResponse.json({ error: "Only instructors can upload course materials." }, { status: 403 })
+    }
 
-        console.log("[v0] /api/upload role:", profile?.role ?? "none")
+    const formData = await request.formData()
+    const file = formData.get("file") as File | null
 
-        if (profile?.role !== "instructor" && profile?.role !== "admin") {
-          throw new Error("Only instructors can upload course materials.")
-        }
+    if (!file) {
+      return NextResponse.json({ error: "No file provided." }, { status: 400 })
+    }
 
-        return {
-          addRandomSuffix: true,
-          maximumSizeInBytes: 1024 * 1024 * 1024, // 1 GB
-        }
-      },
-      onUploadCompleted: async () => {
-        // No-op: the client persists the returned URL when the lesson is saved.
-      },
+    const blob = await put(file.name, file, {
+      access: "public",
+      addRandomSuffix: true,
+      contentType: file.type || undefined,
     })
 
-    return NextResponse.json(jsonResponse)
+    return NextResponse.json({ url: blob.url })
   } catch (error) {
     console.log("[v0] /api/upload error:", (error as Error).message)
-    return NextResponse.json({ error: (error as Error).message }, { status: 400 })
+    return NextResponse.json({ error: (error as Error).message || "Upload failed." }, { status: 500 })
   }
 }

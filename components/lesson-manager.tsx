@@ -1,7 +1,6 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { upload } from "@vercel/blob/client"
 import { createClient } from "@/lib/supabase/client"
 import type { Lesson, LessonMaterial, MaterialType } from "@/lib/types/database"
 import { Card, CardContent } from "@/components/ui/card"
@@ -62,20 +61,22 @@ export function LessonManager({ courseId, initialLessons }: LessonManagerProps) 
     setError(null)
     setUploadError(null)
     setUploadingId(material.id)
-    console.log("[v0] upload starting:", { name: file.name, size: file.size, type: file.type })
     try {
-      const blob = await upload(file.name, file, {
-        access: "public",
-        handleUploadUrl: "/api/upload",
-        contentType: file.type || undefined,
-      })
-      console.log("[v0] upload succeeded, url:", blob.url)
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const res = await fetch("/api/upload", { method: "POST", body: formData })
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Upload failed.")
+      }
+
       updateMaterialState(lessonId, material.id, {
-        url: blob.url,
+        url: data.url,
         file_name: material.file_name || file.name,
       })
     } catch (e: any) {
-      console.log("[v0] upload failed:", e?.message, e)
       setUploadError(e?.message || "Upload failed. Please try again.")
     } finally {
       setUploadingId(null)
