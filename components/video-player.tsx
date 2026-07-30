@@ -42,7 +42,8 @@ interface Progress {
 interface VideoPlayerProps {
   courseId: string
   lessons: Lesson[]
-  initialLessonId: string
+  currentLessonId: string
+  onLessonChange: (lessonId: string) => void
   progressData: Progress[]
   userId: string
 }
@@ -56,8 +57,14 @@ const TYPE_ICON: Record<MaterialType, typeof Video> = {
   download: Download,
 }
 
-export function VideoPlayer({ courseId, lessons, initialLessonId, progressData, userId }: VideoPlayerProps) {
-  const [currentLessonId, setCurrentLessonId] = useState(initialLessonId)
+export function VideoPlayer({
+  courseId,
+  lessons,
+  currentLessonId,
+  onLessonChange,
+  progressData,
+  userId,
+}: VideoPlayerProps) {
   const [isCompleted, setIsCompleted] = useState(false)
   const [activeMaterialId, setActiveMaterialId] = useState<string | null>(null)
   const router = useRouter()
@@ -134,10 +141,10 @@ export function VideoPlayer({ courseId, lessons, initialLessonId, progressData, 
   }
 
   const handleNextLesson = () => {
-    if (currentIndex < lessons.length - 1) setCurrentLessonId(lessons[currentIndex + 1].id)
+    if (currentIndex < lessons.length - 1) onLessonChange(lessons[currentIndex + 1].id)
   }
   const handlePreviousLesson = () => {
-    if (currentIndex > 0) setCurrentLessonId(lessons[currentIndex - 1].id)
+    if (currentIndex > 0) onLessonChange(lessons[currentIndex - 1].id)
   }
 
   if (!currentLesson) {

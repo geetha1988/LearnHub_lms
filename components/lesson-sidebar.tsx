@@ -23,9 +23,10 @@ interface LessonSidebarProps {
   courseId: string
   progressData: Progress[]
   currentLessonId: string
+  onSelectLesson: (lessonId: string) => void
 }
 
-export function LessonSidebar({ lessons, progressData, currentLessonId }: LessonSidebarProps) {
+export function LessonSidebar({ lessons, progressData, currentLessonId, onSelectLesson }: LessonSidebarProps) {
   return (
     <div className="w-80 border-l bg-white">
       <div className="border-b p-4">
@@ -44,8 +45,17 @@ export function LessonSidebar({ lessons, progressData, currentLessonId }: Lesson
             return (
               <Card
                 key={lesson.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => onSelectLesson(lesson.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    onSelectLesson(lesson.id)
+                  }
+                }}
                 className={cn(
-                  "mb-2 cursor-pointer transition-all hover:shadow-md",
+                  "mb-2 cursor-pointer transition-all hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600",
                   isCurrent && "border-indigo-600 bg-indigo-50",
                 )}
               >

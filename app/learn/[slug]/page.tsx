@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { VideoPlayer } from "@/components/video-player"
-import { LessonSidebar } from "@/components/lesson-sidebar"
-import { AIChat } from "@/components/ai-chat"
+import { CourseLearn } from "@/components/course-learn"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
@@ -91,29 +89,13 @@ export default async function LearnCoursePage({ params }: { params: Promise<{ sl
       </header>
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Video Player Area */}
-        <div className="flex flex-1 flex-col overflow-y-auto">
-          <VideoPlayer
-            courseId={course.id}
-            lessons={sortedLessons}
-            initialLessonId={firstIncompleteLesson?.id}
-            progressData={progressData || []}
-            userId={user.id}
-          />
-        </div>
-
-        {/* Lesson Sidebar */}
-        <LessonSidebar
-          lessons={sortedLessons}
-          courseId={course.id}
-          progressData={progressData || []}
-          currentLessonId={firstIncompleteLesson?.id}
-        />
-      </div>
-
-      {/* AI Chat Assistant */}
-      <AIChat courseId={course.id} lessonId={firstIncompleteLesson?.id} />
+      <CourseLearn
+        courseId={course.id}
+        lessons={sortedLessons}
+        initialLessonId={firstIncompleteLesson?.id}
+        progressData={progressData || []}
+        userId={user.id}
+      />
     </div>
   )
 }
