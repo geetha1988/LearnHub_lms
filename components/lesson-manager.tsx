@@ -72,10 +72,20 @@ export function LessonManager({ courseId, initialLessons }: LessonManagerProps) 
         throw new Error(data?.error || "Upload failed.")
       }
 
+      const newFileName = material.file_name || file.name
+
       updateMaterialState(lessonId, material.id, {
         url: data.url,
-        file_name: material.file_name || file.name,
+        file_name: newFileName,
       })
+
+      // Persist immediately so the uploaded URL isn't lost if the instructor
+      // navigates away before pressing "Save Lesson".
+      const { error: persistError } = await supabase
+        .from("lesson_materials")
+        .update({ url: data.url, file_name: newFileName })
+        .eq("id", material.id)
+      if (persistError) throw persistError
     } catch (e: any) {
       setUploadError(e?.message || "Upload failed. Please try again.")
     } finally {
