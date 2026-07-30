@@ -42,11 +42,12 @@ const M = (course: number, lesson: number, mat: number) =>
   `e${course}${lesson}00000-0000-4000-8000-00000000000${mat}`
 
 // Public, hotlink-friendly sample media used for the demo materials.
-// media.w3.org has served these clips openly for years (the Google
-// gtv-videos-bucket now returns AccessDenied on every host).
+// H.264/AAC MP4s from Blender's public download server play natively on all
+// platforms including Windows (media.w3.org served open Ogg/Theora formats that
+// Windows can't play, and the Google gtv-videos-bucket now returns AccessDenied).
 const SAMPLE = {
-  video: "https://media.w3.org/2010/05/sintel/trailer.mp4",
-  video2: "https://media.w3.org/2010/05/bunny/movie.mp4",
+  video: "https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4",
+  video2: "https://download.blender.org/durian/trailer/sintel_trailer-480p.mp4",
   audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
   pdf: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
 }
