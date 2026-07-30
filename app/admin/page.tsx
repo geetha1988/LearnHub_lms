@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { AdminResetButton } from "@/components/admin-reset-button"
+import { SetupSeed } from "@/components/setup-seed"
 import { signOut } from "@/app/actions/auth"
 import { Users, BookOpen, GraduationCap, DollarSign, ArrowLeft, LogOut } from "lucide-react"
 
@@ -115,6 +116,23 @@ export default async function AdminPage() {
           </Card>
         ))}
       </div>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Sample data</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="max-w-xl">
+            <p className="font-medium">Create / re-run sample data</p>
+            <p className="text-sm text-muted-foreground">
+              Populates the platform with demo instructors, students, courses, lessons, and full lesson materials
+              (videos, PDFs, slides, audio, articles, and downloads). Safe to run repeatedly&mdash;it updates existing
+              demo records in place without creating duplicates.
+            </p>
+          </div>
+          <SetupSeed alreadySeeded />
+        </CardContent>
+      </Card>
 
       <Card className="mb-10 border-red-200">
         <CardHeader>
