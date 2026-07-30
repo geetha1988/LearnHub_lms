@@ -348,24 +348,23 @@ function MaterialStage({ material, lessonTitle }: { material: LessonMaterial | n
   }
 }
 
-function MediaError({ url, kind }: { url: string | null; kind: "video" | "audio" }) {
+function OpenInNewTab({ url, kind, errored }: { url: string; kind: "video" | "audio"; errored: boolean }) {
   return (
-    <div className="flex aspect-video flex-col items-center justify-center gap-4 bg-gradient-to-b from-neutral-800 to-black p-6 text-center text-white">
-      {kind === "video" ? <Video className="h-14 w-14 opacity-70" /> : <Music className="h-14 w-14 opacity-70" />}
-      <div>
-        <p className="text-lg font-medium">This {kind} couldn&apos;t be played here</p>
-        <p className="text-sm text-white/70">
-          The player may be blocked in this preview. Open it in a new tab to play it.
-        </p>
-      </div>
-      {url && (
-        <Button asChild variant="secondary">
-          <a href={url} target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="mr-2 h-4 w-4" />
-            Open {kind} in new tab
-          </a>
-        </Button>
-      )}
+    <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-center justify-between gap-2 bg-black/70 px-3 py-2 text-xs text-white/90 backdrop-blur-sm">
+      <span>
+        {errored
+          ? `This ${kind} can't play inside the preview. Open it in a new tab to watch it.`
+          : `Trouble playing? Open this ${kind} in a new tab.`}
+      </span>
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 rounded bg-white/15 px-2 py-1 font-medium hover:bg-white/25"
+      >
+        <ExternalLink className="h-3.5 w-3.5" />
+        Open in new tab
+      </a>
     </div>
   )
 }
@@ -373,43 +372,60 @@ function MediaError({ url, kind }: { url: string | null; kind: "video" | "audio"
 function VideoStage({ material }: { material: LessonMaterial }) {
   const [errored, setErrored] = useState(false)
 
-  if (errored || !material.url) return <MediaError url={material.url} kind="video" />
+  if (!material.url) {
+    return (
+      <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-gradient-to-b from-neutral-800 to-black p-6 text-center text-white">
+        <Video className="h-14 w-14 opacity-70" />
+        <p className="text-sm text-white/70">No video URL provided for this material.</p>
+      </div>
+    )
+  }
 
   return (
-    <video
-      key={material.id}
-      controls
-      playsInline
-      preload="metadata"
-      className="aspect-video h-full w-full"
-      src={material.url}
-      poster="/video-thumbnail.png"
-      onError={() => setErrored(true)}
-    >
-      Your browser does not support the video tag.
-    </video>
+    <div className="relative aspect-video h-full w-full bg-black">
+      <video
+        key={material.id}
+        controls
+        playsInline
+        preload="metadata"
+        className="h-full w-full"
+        src={material.url}
+        poster="/video-thumbnail.png"
+        onError={() => setErrored(true)}
+        onCanPlay={() => setErrored(false)}
+      >
+        Your browser does not support the video tag.
+      </video>
+      <OpenInNewTab url={material.url} kind="video" errored={errored} />
+    </div>
   )
 }
 
 function AudioStage({ material }: { material: LessonMaterial }) {
   const [errored, setErrored] = useState(false)
 
-  if (errored || !material.url) return <MediaError url={material.url} kind="audio" />
-
   return (
-    <div className="flex aspect-video flex-col items-center justify-center gap-6 bg-gradient-to-b from-neutral-800 to-black p-6 text-white">
+    <div className="relative flex aspect-video flex-col items-center justify-center gap-6 bg-gradient-to-b from-neutral-800 to-black p-6 text-white">
       <Music className="h-20 w-20 opacity-80" />
       <p className="text-lg font-medium text-balance text-center">{material.title}</p>
-      <audio
-        key={material.id}
-        controls
-        preload="metadata"
-        className="w-full max-w-xl"
-        src={material.url}
-        onError={() => setErrored(true)}
-      >
-        Your browser does not support the audio element.
-      </audio>
+      {material.url ? (
+        <>
+          <audio
+            key={material.id}
+            controls
+            preload="metadata"
+            className="w-full max-w-xl"
+            src={material.url}
+            onError={() => setErrored(true)}
+            onCanPlay={() => setErrored(false)}
+          >
+            Your browser does not support the audio element.
+          </audio>
+          <OpenInNewTab url={material.url} kind="audio" errored={errored} />
+        </>
+      ) : (
+        <p className="text-sm text-white/70">No audio URL provided for this material.</p>
+      )}
     </div>
   )
 }
